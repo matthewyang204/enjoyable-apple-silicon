@@ -1,4 +1,5 @@
 # Xcode
+dist/*
 build/*
 *.pbxuser
 !default.pbxuser
@@ -16,4 +17,3 @@ profile
 .DS_Store
 *.helpindex
 *~
-

@@ -1,6 +1,11 @@
 Enjoyable is an application for Mac OS X which allows you to use
 controller inputs like a mouse or keyboard.
 
+[中文说明](README.zh-CN.md)
+
+This repository is maintained from the upstream project at
+[matthewyang204/Enjoyable](https://github.com/matthewyang204/Enjoyable).
+
 If you've ever played a video game which only supports mouse and
 keyboard input but you want to use a joystick or gamepad, then
 Enjoyable will help you do that.
@@ -58,6 +63,47 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 The joystick icon is from the Tango icon set and is public domain.
 
 # Building
+For day-to-day local development, use the root `Makefile`:
+
+```bash
+make build
+make run
+```
+
+Useful aliases:
+
+```bash
+make open
+make install
+make release
+make install-release
+make clean
+```
+
+If `xcodebuild` says you have not agreed to the Xcode license yet, run:
+
+```bash
+sudo xcodebuild -license
+```
+
+## Installing On Your Mac
+
+Install the current build into `~/Applications`:
+
+```bash
+make install
+```
+
+Install a Release build instead:
+
+```bash
+make install-release
+```
+
+If you prefer to install it manually, build first and then copy
+`build/Build/Products/Debug/Enjoyable.app` into `Applications` or
+`~/Applications`.
+
 If you just want to get a binary of the architecture of your current computer, just run Product > Build in Xcode. However, if you want a universal binary for distribution on other websites, here's how:
 1. Clone and `cd` into the repo
 2. Run `xcodebuild -project Enjoyable.xcodeproj -scheme Enjoyable -configuration Release -arch arm64 -derivedDataPath ./build build` and copy the resulting app bundle to another location, such as the Downloads folder. You'll need it later.

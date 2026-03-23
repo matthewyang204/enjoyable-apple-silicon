@@ -11,6 +11,24 @@
 #import "NJInputAnalog.h"
 #import "NJInputHat.h"
 #import "NJInputButton.h"
+#import <IOKit/IOKitLib.h>
+
+static NSString *IdentifierComponent(id value) {
+    NSString *string = nil;
+    if ([value isKindOfClass:NSString.class]) {
+        string = value;
+    } else if ([value isKindOfClass:NSNumber.class]) {
+        string = [(NSNumber *)value stringValue];
+    }
+
+    if (!string.length) {
+        return @"";
+    }
+
+    string = [string stringByReplacingOccurrencesOfString:@":" withString:@"_"];
+    string = [string stringByReplacingOccurrencesOfString:@"~" withString:@"_"];
+    return string;
+}
 
 static NSArray *InputsForElement(IOHIDDeviceRef device, id parent) {
     CFArrayRef elements = IOHIDDeviceCopyMatchingElements(device, NULL, kIOHIDOptionsTypeNone);
@@ -69,6 +87,8 @@ static NSArray *InputsForElement(IOHIDDeviceRef device, id parent) {
 @implementation NJDevice {
     int _vendorId;
     int _productId;
+    NSString *_identifierPrefix;
+    NSString *_legacyIdentifierPrefix;
 }
 
 - (id)initWithDevice:(IOHIDDeviceRef)dev {
@@ -78,6 +98,12 @@ static NSArray *InputsForElement(IOHIDDeviceRef device, id parent) {
         self.device = dev;
         _vendorId = [(__bridge NSNumber *)IOHIDDeviceGetProperty(dev, CFSTR(kIOHIDVendorIDKey)) intValue];
         _productId = [(__bridge NSNumber *)IOHIDDeviceGetProperty(dev, CFSTR(kIOHIDProductIDKey)) intValue];
+        NSString *transport = IdentifierComponent((__bridge id)IOHIDDeviceGetProperty(dev, CFSTR(kIOHIDTransportKey)));
+        NSString *manufacturer = IdentifierComponent((__bridge id)IOHIDDeviceGetProperty(dev, CFSTR(kIOHIDManufacturerKey)));
+        NSString *product = IdentifierComponent(name);
+        _identifierPrefix = [[NSString alloc] initWithFormat:@"%d:%d:%@:%@:%@",
+                             _vendorId, _productId, transport, manufacturer, product];
+        _legacyIdentifierPrefix = [[NSString alloc] initWithFormat:@"%d:%d", _vendorId, _productId];
         self.children = InputsForElement(dev, self);
         self.index = 1;
     }
@@ -94,7 +120,16 @@ static NSArray *InputsForElement(IOHIDDeviceRef device, id parent) {
 }
 
 - (NSString *)uid {
-    return [NSString stringWithFormat:@"%d:%d:%d", _vendorId, _productId, _index];
+    return [NSString stringWithFormat:@"%@:%d", _identifierPrefix, _index];
+}
+
+- (NSArray *)uidAliases {
+    NSString *uid = self.uid;
+    NSString *legacyUID = [NSString stringWithFormat:@"%@:%d", _legacyIdentifierPrefix, _index];
+    if ([uid isEqualToString:legacyUID]) {
+        return uid ? @[uid] : @[];
+    }
+    return uid ? @[uid, legacyUID] : @[legacyUID];
 }
 
 - (NJInput *)findInputByCookie:(IOHIDElementCookie)cookie {

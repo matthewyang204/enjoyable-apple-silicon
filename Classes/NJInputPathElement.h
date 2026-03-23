@@ -14,6 +14,7 @@
 @property (nonatomic, weak) NJInputPathElement *parent;
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, readonly) NSString *uid;
+@property (nonatomic, readonly) NSArray *uidAliases;
 @property (nonatomic, strong) NSArray *children;
 
 - (NJInputPathElement *)elementForUID:(NSString *)uid;

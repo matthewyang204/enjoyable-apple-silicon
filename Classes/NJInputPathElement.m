@@ -37,18 +37,40 @@
     return [NSString stringWithFormat:@"%@~%@", _parent.uid, _eid];
 }
 
-- (NJInputPathElement *)elementForUID:(NSString *)uid {
-    if ([uid isEqualToString:self.uid]) {
-        return self;
-    } else if (![uid hasPrefix:self.uid]) {
-        return nil;
-    } else {
-        for (NJInputPathElement *elem in self.children) {
-            NJInputPathElement *ret = [elem elementForUID:uid];
-            if (ret) {
-                return ret;
-            }
+- (NSArray *)uidAliases {
+    if (!_parent || !_eid.length) {
+        return self.uid ? @[self.uid] : @[];
+    }
+
+    NSMutableOrderedSet *uids = [[NSMutableOrderedSet alloc] init];
+    for (NSString *parentUID in _parent.uidAliases) {
+        if (parentUID.length) {
+            [uids addObject:[NSString stringWithFormat:@"%@~%@", parentUID, _eid]];
         }
+    }
+    return uids.array;
+}
+
+- (NJInputPathElement *)elementForUID:(NSString *)uid {
+    BOOL canContainUID = NO;
+    for (NSString *candidate in self.uidAliases) {
+        if ([uid isEqualToString:candidate]) {
+            return self;
+        }
+        if ([uid hasPrefix:[candidate stringByAppendingString:@"~"]]) {
+            canContainUID = YES;
+        }
+    }
+
+    if (!canContainUID) {
+        return nil;
+    }
+
+    for (NJInputPathElement *elem in self.children) {
+        NJInputPathElement *ret = [elem elementForUID:uid];
+        if (ret) {
+            return ret;
+            }
     }
     return nil;
 }

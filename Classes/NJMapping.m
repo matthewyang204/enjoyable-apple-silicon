@@ -55,15 +55,36 @@
 }
 
 - (NJOutput *)objectForKeyedSubscript:(NJInput *)input {
-    return input ? _entries[input.uid] : nil;
+    if (!input) {
+        return nil;
+    }
+
+    for (NSString *uid in input.uidAliases) {
+        NJOutput *output = _entries[uid];
+        if (output) {
+            return output;
+        }
+    }
+
+    return nil;
 }
 
 - (void)setObject:(NJOutput *)output forKeyedSubscript:(NJInput *)input {
     if (input) {
+        NSArray *uids = input.uidAliases;
+        NSString *primaryUID = uids.firstObject;
         if (output) {
-            _entries[input.uid] = output;
+            if (primaryUID) {
+                _entries[primaryUID] = output;
+            }
         } else {
-            [_entries removeObjectForKey:input.uid];
+            [_entries removeObjectForKey:primaryUID];
+        }
+
+        for (NSString *uid in uids) {
+            if (![uid isEqualToString:primaryUID]) {
+                [_entries removeObjectForKey:uid];
+            }
         }
     }
 }
